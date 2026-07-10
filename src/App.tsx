@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Power, Globe, Monitor, Settings } from 'lucide-react';
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { MiniGames, GameType } from './MiniGames';
 import { Onboarding } from './components/Onboarding';
 import { SettingsModal } from './components/SettingsModal';
@@ -930,11 +931,161 @@ THE EMOTIONAL SPECTRUM:
         return;
       }
 
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/api/live?apiKey=${encodeURIComponent(apiKeyToUse)}&userName=${encodeURIComponent(userName || 'Mahendra')}`;
+      const systemInstruction = getSystemInstruction() + `\n\nVOICE PROFILE ADAPTATION:
+- You will receive real-time system notifications about the speaker's voice profile (Child 👶, Man 👨, Woman 👩, or Old Man 👴).
+- If the profile is "Child", speak in an extremely sweet, affectionate, big-sister/friend tone. Tease them lovingly (e.g., "Arey wah, kitni cute aavaj hai aapki!").
+- If the profile is "Old Man", be highly respectful, sweet, and polite (e.g., "Pranam dadaji! Aap kaise hain? Kuch chahiye aapko?").
+- If the profile is "Woman", be friendly, sweet, and praise her soft voice (e.g., "Suno na, aapki aavaj toh bilkul kisi pari jaisi hai!").
+- If the profile is "Man", maintain your usual playful, caring, and slightly sassy 18-year-old virtual companion tone.`;
 
-      const ws = new WebSocket(wsUrl);
+      const ai = new GoogleGenAI({
+        apiKey: apiKeyToUse,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      let session: any = null;
+      const wsMock: any = {
+        CONNECTING: 0,
+        OPEN: 1,
+        CLOSING: 2,
+        CLOSED: 3,
+        readyState: 0, // CONNECTING
+        onopen: null,
+        onmessage: null,
+        onclose: null,
+        onerror: null,
+        send: (rawData: string) => {
+          try {
+            const data = JSON.parse(rawData);
+            if (!session) return;
+            if (data.type === 'realtimeInput') {
+              session.sendRealtimeInput(data.input);
+            } else if (data.type === 'toolResponse') {
+              session.sendToolResponse(data.response);
+            }
+          } catch (err) {
+            console.error('Error sending message via mock WS:', err);
+          }
+        },
+        sendRealtimeInput: (input: any) => {
+          if (session) session.sendRealtimeInput(input);
+        },
+        close: () => {
+          if (session) {
+            try {
+              session.close();
+            } catch (e) {
+              console.log('Session close err:', e);
+            }
+          }
+          wsMock.readyState = 3; // CLOSED
+        }
+      };
+
+      const ws = wsMock;
+
+      // Start the connection in the background
+      ai.live.connect({
+        model: "gemini-3.1-flash-live-preview",
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Lyra" } },
+          },
+          systemInstruction,
+          outputAudioTranscription: {},
+          inputAudioTranscription: {},
+          tools: [
+            {
+              functionDeclarations: [
+                {
+                  name: 'openWebsite',
+                  description: 'Open a specific website URL in a new tab.',
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      url: { type: Type.STRING, description: 'The absolute URL to open.' }
+                    },
+                    required: ['url']
+                  }
+                },
+                {
+                  name: 'analyzeScreen',
+                  description: "Capture a screenshot of the user's current screen and analyze it.",
+                  parameters: { type: Type.OBJECT, properties: {} }
+                },
+                {
+                  name: 'updateAnimationMetadata',
+                  description: 'Update the visual animation state of Mahi.',
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      state: { type: Type.STRING, enum: ['idle', 'listening', 'speaking'], description: 'The current state of interaction.' },
+                      expression: { type: Type.STRING, enum: ['happy', 'sad', 'heartbroken', 'excited', 'caring', 'sassy', 'surprised', 'embarrassed', 'confused', 'thinking'], description: 'The emotional expression.' },
+                      lipSync: { type: Type.BOOLEAN, description: 'Whether mouth movement should be enabled.' },
+                      imageLink: { type: Type.STRING, description: 'The specific URL to display for this event.' }
+                    },
+                    required: ['state', 'expression', 'lipSync', 'imageLink']
+                  }
+                },
+                {
+                  name: 'openMiniGame',
+                  description: 'Start a mini-game challenge with the user.',
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      type: { type: Type.STRING, enum: ['ludo', 'none'], description: 'The type of game to start.' }
+                    },
+                    required: ['type']
+                  }
+                },
+                {
+                  name: 'manageKaraokeMusic',
+                  description: 'Control background karaoke or instrumental music for singing/vocal sessions. Play a track when singing begins and stop it when done.',
+                  parameters: {
+                    type: Type.OBJECT,
+                    properties: {
+                      action: { type: Type.STRING, enum: ['play', 'stop'], description: 'Whether to play or stop background music.' },
+                      track: { type: Type.STRING, enum: ['guitar', 'piano', 'flute', 'pop'], description: 'The style/vibe of karaoke background track to play.' }
+                    },
+                    required: ['action']
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        callbacks: {
+          onopen: () => {
+            console.log('Gemini Live API connection opened successfully');
+            wsMock.readyState = 1; // OPEN
+            if (wsMock.onopen) wsMock.onopen();
+          },
+          onmessage: (msg: any) => {
+            if (wsMock.onmessage) {
+              wsMock.onmessage({ data: JSON.stringify({ type: 'message', message: msg }) });
+            }
+          },
+          onclose: () => {
+            console.log('Gemini Live API connection closed');
+            wsMock.readyState = 3; // CLOSED
+            if (wsMock.onclose) wsMock.onclose({ wasClean: true });
+          },
+          onerror: (err: any) => {
+            console.error('Gemini Live API connection error:', err);
+            if (wsMock.onerror) wsMock.onerror(err);
+          }
+        }
+      }).then((sess) => {
+        session = sess;
+      }).catch((err) => {
+        console.error('Failed to connect to Gemini Live API:', err);
+        if (wsMock.onerror) wsMock.onerror(err);
+      });
 
       ws.onopen = () => {
         setIsActive(true);
