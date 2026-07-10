@@ -2,14 +2,11 @@ import express from 'express';
 import type { Request, Response } from 'express';
 import cors from 'cors';
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import http from 'http';
 import { WebSocketServer } from 'ws';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,33 +37,25 @@ async function createServer() {
     }
   });
 
-  // Lazy initialization of Gemini client for HTTP
-  let genAI: GoogleGenAI | null = null;
-
-  function getGenAI() {
-    if (!genAI) {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error('GEMINI_API_KEY environment variable is required');
-      }
-      genAI = new GoogleGenAI({ apiKey });
-    }
-    return genAI;
-  }
-
   // Chat API route
   app.post('/chat', async (req: Request, res: Response) => {
     try {
-      const { message } = req.body;
+      const { message, apiKey } = req.body;
 
       if (!message) {
          res.status(400).json({ error: 'Message is required' });
          return;
       }
 
-      const ai = getGenAI();
+      const keyToUse = apiKey || req.headers['x-api-key'];
+      if (!keyToUse) {
+         res.status(400).json({ error: 'Gemini API Key is required' });
+         return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey: String(keyToUse) });
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         contents: message,
       });
 
@@ -86,7 +75,7 @@ async function createServer() {
 
     // Extract API key and userName from the connection URL
     const urlObj = new URL(request.url || '', `http://${request.headers.host || 'localhost'}`);
-    const apiKey = urlObj.searchParams.get('apiKey') || process.env.GEMINI_API_KEY;
+    const apiKey = urlObj.searchParams.get('apiKey');
     const userName = urlObj.searchParams.get('userName') || 'Mahendra';
 
     if (!apiKey) {

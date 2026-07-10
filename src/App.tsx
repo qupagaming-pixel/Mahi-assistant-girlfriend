@@ -281,7 +281,18 @@ export default function App() {
   // Onboarding & Profile State
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('userName') || '');
   const [geminiApiKey, setGeminiApiKey] = useState<string>(() => localStorage.getItem('geminiApiKey') || '');
-  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(() => localStorage.getItem('onboardingCompleted') === 'true');
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(() => {
+    const completed = localStorage.getItem('onboardingCompleted') === 'true';
+    const hasKey = !!localStorage.getItem('geminiApiKey');
+    return completed && hasKey;
+  });
+
+  // Automatically redirect to onboarding if API key is missing
+  useEffect(() => {
+    if (!geminiApiKey) {
+      setOnboardingCompleted(false);
+    }
+  }, [geminiApiKey]);
   const [showSettings, setShowSettings] = useState(false);
   const [showVoiceTracker, setShowVoiceTracker] = useState<boolean>(() => localStorage.getItem('showVoiceTracker') === 'true');
 
