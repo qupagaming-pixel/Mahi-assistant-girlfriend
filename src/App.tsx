@@ -5,11 +5,12 @@
 
 import React, { useState, useEffect, useRef, useCallback, Fragment } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Mic, MicOff, Power, Globe, Monitor, Settings } from 'lucide-react';
+import { Mic, MicOff, Power, Globe, Monitor, Settings, HelpCircle } from 'lucide-react';
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { MiniGames, GameType } from './MiniGames';
 import { Onboarding } from './components/Onboarding';
 import { SettingsModal } from './components/SettingsModal';
+import { InfoCenter } from './components/InfoCenter';
 
 // --- AI Configuration ---
 const MAHI_SYSTEM_INSTRUCTION = `
@@ -295,6 +296,7 @@ export default function App() {
     }
   }, [geminiApiKey]);
   const [showSettings, setShowSettings] = useState(false);
+  const [showInfoCenter, setShowInfoCenter] = useState(false);
   const [showVoiceTracker, setShowVoiceTracker] = useState<boolean>(() => localStorage.getItem('showVoiceTracker') === 'true');
 
   // Voice Recognition States
@@ -1695,6 +1697,16 @@ THE EMOTIONAL SPECTRUM:
           </div>
 
           <motion.button
+            onClick={() => setShowInfoCenter(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="bg-white/5 border border-white/10 hover:border-white/20 p-3 rounded-xl flex items-center justify-center cursor-pointer text-white/80 hover:text-white transition-all shadow-lg"
+            title="Help, FAQs & Legal Hub"
+          >
+            <HelpCircle size={18} />
+          </motion.button>
+
+          <motion.button
             onClick={() => setShowSettings(true)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -2344,6 +2356,16 @@ THE EMOTIONAL SPECTRUM:
               setShowVoiceTracker(val);
             }}
             theme={theme}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showInfoCenter && (
+          <InfoCenter
+            onClose={() => setShowInfoCenter(false)}
+            theme={theme}
+            userName={userName}
           />
         )}
       </AnimatePresence>
