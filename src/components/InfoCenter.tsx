@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, Search, Shield, FileText, HelpCircle, Info, Phone, 
@@ -43,13 +44,37 @@ interface InfoCenterProps {
 }
 
 export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
-  const [currentView, setCurrentView] = useState<InfoView>('home');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const routeToView = (path: string): InfoView => {
+    switch (path) {
+      case '/about': return 'about';
+      case '/privacy': return 'privacy';
+      case '/terms': return 'terms';
+      case '/contact': return 'contact';
+      case '/help': return 'home';
+      case '/tutorials': return 'tutorials';
+      case '/faq': return 'faq';
+      case '/disclaimer': return 'disclaimer';
+      case '/cookies': return 'cookies';
+      case '/release-notes': return 'release-notes';
+      default: return 'home';
+    }
+  };
+
+  const currentView = routeToView(location.pathname);
+
+  const viewToPath = (view: InfoView): string => {
+    if (view === 'home') return '/help';
+    return `/${view}`;
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [faqExpanded, setFaqExpanded] = useState<Record<string, boolean>>({});
   const [selectedHelpCategory, setSelectedHelpCategory] = useState<string>('All');
   const [activeHelpArticle, setActiveHelpArticle] = useState<HelpArticle | null>(null);
   const [activeTutorial, setActiveTutorial] = useState<TutorialCard | null>(null);
-  const [historyViews, setHistoryViews] = useState<InfoView[]>(['home']);
 
   // Contact Form States
   const [contactForm, setContactForm] = useState({
@@ -68,13 +93,12 @@ export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
     }
   }, [currentView, activeHelpArticle, activeTutorial]);
 
-  // Navigate view and track history
+  // Navigate view
   const navigateTo = (view: InfoView) => {
-    setHistoryViews(prev => [...prev, view]);
-    setCurrentView(view);
     // Reset specific sub-page views
     if (view !== 'help') setActiveHelpArticle(null);
     if (view !== 'tutorials') setActiveTutorial(null);
+    navigate(viewToPath(view));
   };
 
   const handleBack = () => {
@@ -86,15 +110,7 @@ export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
       setActiveTutorial(null);
       return;
     }
-    if (historyViews.length > 1) {
-      const nextHistory = [...historyViews];
-      nextHistory.pop(); // remove current
-      const prevView = nextHistory[nextHistory.length - 1];
-      setHistoryViews(nextHistory);
-      setCurrentView(prevView);
-    } else {
-      setCurrentView('home');
-    }
+    navigate('/help');
   };
 
   // SEO & Schema.org Structured Data Updates
@@ -509,7 +525,7 @@ export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
             {/* Breadcrumb Path */}
             <div className="flex items-center gap-1.5 text-xs text-neutral-400 font-mono">
-              <button onClick={() => setCurrentView('home')} className="hover:text-white hover:underline transition-colors cursor-pointer">MAHI HUB</button>
+              <button onClick={() => navigateTo('home')} className="hover:text-white hover:underline transition-colors cursor-pointer">MAHI HUB</button>
               {currentView !== 'home' && (
                 <>
                   <ChevronRight size={10} className="text-neutral-600" />

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, Fragment } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Power, Globe, Monitor, Settings, HelpCircle } from 'lucide-react';
 import { GoogleGenAI, Type, Modality } from "@google/genai";
@@ -308,7 +309,14 @@ export default function App() {
   }, [geminiApiKey]);
 
   const [showSettings, setShowSettings] = useState(false);
-  const [showInfoCenter, setShowInfoCenter] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const VALID_INFO_ROUTES = [
+    '/about', '/privacy', '/terms', '/contact', '/help', '/cookies', '/disclaimer', '/release-notes', '/tutorials', '/faq'
+  ];
+
+  const showInfoCenter = VALID_INFO_ROUTES.includes(location.pathname);
   const [showVoiceTracker, setShowVoiceTracker] = useState<boolean>(() => localStorage.getItem('showVoiceTracker') === 'true');
 
   // Track settings opened
@@ -1728,7 +1736,7 @@ THE EMOTIONAL SPECTRUM:
           </div>
 
           <motion.button
-            onClick={() => setShowInfoCenter(true)}
+            onClick={() => navigate('/help')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="bg-white/5 border border-white/10 hover:border-white/20 p-3 rounded-xl flex items-center justify-center cursor-pointer text-white/80 hover:text-white transition-all shadow-lg"
@@ -2395,7 +2403,7 @@ THE EMOTIONAL SPECTRUM:
       <AnimatePresence>
         {showInfoCenter && (
           <InfoCenter
-            onClose={() => setShowInfoCenter(false)}
+            onClose={() => navigate('/')}
             theme={theme}
             userName={userName}
           />
