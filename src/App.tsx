@@ -11,6 +11,7 @@ import { MiniGames, GameType } from './MiniGames';
 import { Onboarding } from './components/Onboarding';
 import { SettingsModal } from './components/SettingsModal';
 import { InfoCenter } from './components/InfoCenter';
+import { usePageTracking, trackEvent } from './utils/analytics';
 
 // --- AI Configuration ---
 const MAHI_SYSTEM_INSTRUCTION = `
@@ -277,6 +278,16 @@ function getVoiceTimbre(pitch: number): string {
 }
 
 export default function App() {
+  // Google Analytics Page Tracking & Session Monitoring
+  usePageTracking();
+
+  useEffect(() => {
+    trackEvent('session_started');
+    return () => {
+      trackEvent('session_ended');
+    };
+  }, []);
+
   const [currentTheme, setCurrentTheme] = useState<keyof typeof THEMES>('purple');
   const theme = THEMES[currentTheme];
 
@@ -295,9 +306,17 @@ export default function App() {
       setOnboardingCompleted(false);
     }
   }, [geminiApiKey]);
+
   const [showSettings, setShowSettings] = useState(false);
   const [showInfoCenter, setShowInfoCenter] = useState(false);
   const [showVoiceTracker, setShowVoiceTracker] = useState<boolean>(() => localStorage.getItem('showVoiceTracker') === 'true');
+
+  // Track settings opened
+  useEffect(() => {
+    if (showSettings) {
+      trackEvent('settings_opened');
+    }
+  }, [showSettings]);
 
   // Voice Recognition States
   const [detectedPitch, setDetectedPitch] = useState<number | null>(null);
@@ -724,6 +743,12 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file || !isActive) return;
 
+    // Track image upload event
+    trackEvent('image_uploaded', {
+      mime_type: file.type,
+      size: file.size
+    });
+
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = (reader.result as string).split(',')[1];
@@ -913,6 +938,7 @@ THE EMOTIONAL SPECTRUM:
   const startMahi = async () => {
     try {
       setError(null);
+      trackEvent('voice_chat_started');
       if (audioContextRef.current?.state === 'suspended') {
         await audioContextRef.current.resume();
       }
@@ -1332,6 +1358,9 @@ THE EMOTIONAL SPECTRUM:
   };
 
   const stopMahi = () => {
+    if (isActive) {
+      trackEvent('voice_chat_ended');
+    }
     setIsActive(false);
     setIsListening(false);
     setIsSpeaking(false);
@@ -1405,6 +1434,8 @@ THE EMOTIONAL SPECTRUM:
           setUserName(name);
           setGeminiApiKey(apiKey);
           setOnboardingCompleted(true);
+          trackEvent('onboarding_completed');
+          trackEvent('api_key_saved');
         }}
         theme={theme}
       />
@@ -2331,6 +2362,7 @@ THE EMOTIONAL SPECTRUM:
             onSaveApiKey={(newKey) => {
               localStorage.setItem('geminiApiKey', newKey);
               setGeminiApiKey(newKey);
+              trackEvent('api_key_saved');
             }}
             onDeleteApiKey={() => {
               localStorage.removeItem('geminiApiKey');

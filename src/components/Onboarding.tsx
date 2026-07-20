@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Key, User, ArrowRight, ArrowLeft, Eye, EyeOff, CheckCircle2, AlertCircle, ExternalLink, HelpCircle, LogIn, Sparkles, Bot, Volume2, Lock } from 'lucide-react';
+import { trackEvent } from '../utils/analytics';
 
 interface OnboardingProps {
   onComplete: (name: string, apiKey: string) => void;
@@ -16,6 +17,10 @@ interface OnboardingProps {
 }
 
 export function Onboarding({ onComplete, theme }: OnboardingProps) {
+  useEffect(() => {
+    trackEvent('onboarding_started');
+  }, []);
+
   const [isOnSetup, setIsOnSetup] = useState(false);
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
