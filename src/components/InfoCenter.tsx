@@ -261,7 +261,7 @@ export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
       document.head.appendChild(canonicalLink);
     }
     const currentPath = currentView === 'home' ? '' : currentView;
-    const resolvedUrl = `https://mahiai.com/${currentPath}`;
+    const resolvedUrl = `https://heymahi.in/${currentPath}`;
     canonicalLink.setAttribute('href', resolvedUrl);
 
     // 4. Update Open Graph Meta Tags
@@ -331,13 +331,13 @@ export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
       
       const defaultDesc = "Meet Mahi, an emotionally intelligent, sweet, and sassy anime-inspired virtual companion. Enjoy high-fidelity real-time voice-to-voice chat, screen-share vision analysis, absolute local privacy, and custom karaoke sessions powered by Google Gemini.";
       if (metaDesc) metaDesc.setAttribute('content', defaultDesc);
-      if (canonicalLink) canonicalLink.setAttribute('href', "https://mahiai.com/");
+      if (canonicalLink) canonicalLink.setAttribute('href', "https://heymahi.in/");
       if (ogTitle) ogTitle.setAttribute('content', "Mahi AI - Premium Privacy-First Virtual Companion & Assistant");
       if (ogDesc) ogDesc.setAttribute('content', defaultDesc);
-      if (ogUrl) ogUrl.setAttribute('content', "https://mahiai.com/");
+      if (ogUrl) ogUrl.setAttribute('content', "https://heymahi.in/");
       if (twitterTitle) twitterTitle.setAttribute('content', "Mahi AI - Premium Privacy-First Virtual Companion & Assistant");
       if (twitterDesc) twitterDesc.setAttribute('content', defaultDesc);
-      if (twitterUrl) twitterUrl.setAttribute('content', "https://mahiai.com/");
+      if (twitterUrl) twitterUrl.setAttribute('content', "https://heymahi.in/");
 
       const defaultSchema = {
         "@context": "https://schema.org",
@@ -347,8 +347,8 @@ export function InfoCenter({ onClose, theme, userName }: InfoCenterProps) {
         "applicationCategory": "AssistantApplication",
         "browserRequirements": "Requires HTML5 Canvas, Web Audio API, WebSocket support",
         "genre": "Virtual Companion & Entertainment",
-        "url": "https://mahiai.com/",
-        "image": "https://mahiai.com/favicon.svg",
+        "url": "https://heymahi.in/",
+        "image": "https://heymahi.in/favicon.svg",
         "description": "An emotionally intelligent, sweet, and sassy anime-inspired personal AI assistant with real-time voice-to-voice interaction.",
         "author": {
           "@type": "Person",
