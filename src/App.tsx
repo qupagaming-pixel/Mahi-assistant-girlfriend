@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, Fragment } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Power, Globe, Monitor, Settings, HelpCircle } from 'lucide-react';
 import { GoogleGenAI, Type, Modality } from "@google/genai";
@@ -312,11 +312,6 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const VALID_INFO_ROUTES = [
-    '/about', '/privacy', '/terms', '/contact', '/help', '/cookies', '/disclaimer', '/release-notes', '/tutorials', '/faq'
-  ];
-
-  const showInfoCenter = VALID_INFO_ROUTES.includes(location.pathname);
   const [showVoiceTracker, setShowVoiceTracker] = useState<boolean>(() => localStorage.getItem('showVoiceTracker') === 'true');
 
   // Track settings opened
@@ -2400,14 +2395,21 @@ THE EMOTIONAL SPECTRUM:
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showInfoCenter && (
-          <InfoCenter
-            onClose={() => navigate('/')}
-            theme={theme}
-            userName={userName}
-          />
-        )}
+      <AnimatePresence mode="wait">
+        <Routes location={location}>
+          <Route path="/" element={null} />
+          <Route path="/about" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/privacy" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/terms" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/contact" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/help" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/tutorials" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/faq" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/cookies" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/disclaimer" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="/release-notes" element={<InfoCenter onClose={() => navigate('/')} theme={theme} userName={userName} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </AnimatePresence>
 
       {/* Absolute Bottom Developer Tag */}
